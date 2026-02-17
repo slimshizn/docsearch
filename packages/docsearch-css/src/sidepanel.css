@@ -339,6 +339,7 @@ html[data-theme='dark'] .DocSearch-SidepanelButton.inline:hover {
   font-weight: 600;
   line-height: 1.25rem;
   color: var(--docsearch-sidepanel-text-base);
+  margin: 0;
 }
 
 .DocSearch-Sidepanel-Content {
@@ -535,6 +536,12 @@ html[data-theme="dark"] .DocSearch-Sidepanel-Prompt--stop:hover {
 
 .DocSearch-Sidepanel-ConversationHistoryScreen {
   padding-top: 1rem;
+}
+
+.DocSearch-Sidepanel-ConversationHistoryScreen ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
 }
 
 .DocSearch-Sidepanel-RecentConversation {
