@@ -9,7 +9,13 @@ import type { StoredSearchPlugin } from './stored-searches';
 import { ToolCall } from './ToolCall';
 import type { InternalDocSearchHit, StoredAskAiState } from './types';
 import type { AIMessage } from './types/AskiAi';
-import { extractLinksFromMessage, getMessageContent, isThreadDepthError } from './utils/ai';
+import {
+  extractLinksFromMessage,
+  filterExchangesForThreadDepthError,
+  getMessageContent,
+  getThreadDepthErrorUserFacingMessage,
+  isThreadDepthError,
+} from './utils/ai';
 import { groupConsecutiveToolResults } from './utils/groupConsecutiveToolResults';
 
 export type AskAiScreenTranslations = Partial<{
@@ -378,6 +384,8 @@ export function AskAiScreen({ translations = {}, ...props }: AskAiScreenProps): 
     return status === 'error' && isThreadDepthError(askAiError);
   }, [status, askAiError]);
 
+  const threadDepthApiMessage = useMemo(() => getThreadDepthErrorUserFacingMessage(askAiError), [askAiError]);
+
   // Group messages into exchanges (user + assistant pairs)
   const exchanges: Exchange[] = useMemo(() => {
     const grouped: Exchange[] = [];
@@ -392,17 +400,7 @@ export function AskAiScreen({ translations = {}, ...props }: AskAiScreenProps): 
       }
     }
 
-    // If there's a thread depth error, remove the last exchange (the one that triggered the error)
-    // We only want to show successful exchanges
-    if (hasThreadDepthError && grouped.length > 0) {
-      // Check if the last exchange has no assistant message (failed to complete)
-      const lastExchange = grouped[grouped.length - 1];
-      if (!lastExchange.assistantMessage) {
-        grouped.pop();
-      }
-    }
-
-    return grouped;
+    return filterExchangesForThreadDepthError(grouped, hasThreadDepthError);
   }, [messages, hasThreadDepthError]);
 
   const handleSearchQueryClick = (query: string): void => {
@@ -419,6 +417,9 @@ export function AskAiScreen({ translations = {}, ...props }: AskAiScreenProps): 
       {showThreadDepthError && (
         <div className="DocSearch-AskAiScreen-MessageContent DocSearch-AskAiScreen-Error DocSearch-AskAiScreen-Error--ThreadDepth">
           <div className="DocSearch-AskAiScreen-Error-Content">
+            {threadDepthApiMessage ? (
+              <p className="DocSearch-AskAiScreen-Error-Title">{threadDepthApiMessage}</p>
+            ) : null}
             <p>
               {threadDepthExceededMessage}{' '}
               <button type="button" className="DocSearch-ThreadDepthError-Link" onClick={props.onNewConversation}>

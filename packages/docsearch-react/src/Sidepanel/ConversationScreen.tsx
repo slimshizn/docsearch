@@ -9,7 +9,7 @@ import type { StoredSearchPlugin } from '../stored-searches';
 import { ToolCall, type ToolCallTranslations } from '../ToolCall';
 import type { StoredAskAiState } from '../types';
 import { isAIToolPart, type AIMessage } from '../types/AskiAi';
-import { extractLinksFromMessage, getMessageContent } from '../utils/ai';
+import { extractLinksFromMessage, getMessageContent, isThreadDepthError } from '../utils/ai';
 import { groupConsecutiveToolResults } from '../utils/groupConsecutiveToolResults';
 
 import { AggregatedSearchBlock } from './AggregatedSearchBlock';
@@ -60,7 +60,15 @@ export type ConversationScreenTranslations = Partial<
     /**
      * Error title shown if there is an error while chatting.
      */
-    errorTitleText;
+    errorTitleText: string;
+    /**
+     * Message shown when thread depth limit is exceeded (AI-217).
+     */
+    threadDepthExceededMessage: string;
+    /**
+     * Button label to start a new conversation after a thread depth error.
+     */
+    startNewConversationButtonText: string;
   }
 >;
 
@@ -105,6 +113,8 @@ const ConversationExchange = React.forwardRef<HTMLDivElement, ConversationnExcha
       errorTitleText = 'Chat error',
     } = translations;
 
+    const isThreadDepth = isThreadDepthError(streamError);
+
     const assistantContent = useMemo(() => getMessageContent(assistantMessage), [assistantMessage]);
     const userContent = useMemo(() => getMessageContent(userMessage), [userMessage]);
 
@@ -130,7 +140,7 @@ const ConversationExchange = React.forwardRef<HTMLDivElement, ConversationnExcha
           </div>
           <div className="DocSearch-AskAiScreen-Message DocSearch-AskAiScreen-Message--assistant">
             <div className="DocSearch-AskAiScreen-MessageContent">
-              {status === 'error' && streamError && isLastExchange && (
+              {status === 'error' && streamError && isLastExchange && !isThreadDepth && (
                 <div className="DocSearch-AskAiScreen-MessageContent DocSearch-AskAiScreen-Error">
                   <AlertIcon />
                   <div className="DocSearch-AskAiScreen-Error-Content">
